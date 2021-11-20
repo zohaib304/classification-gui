@@ -1,11 +1,15 @@
 from tkinter.constants import DISABLED
 import tkinter.filedialog as fd
+import tensorflow as tf
 import tkinter
 import tkinter.ttk as ttk
 from PIL import ImageTk, Image
 import cv2
 import os
 from mtcnn.mtcnn import MTCNN
+import tensorflow
+from tensorflow.keras.preprocessing import image
+import numpy as np
 
 # create a window
 top = tkinter.Tk()
@@ -24,6 +28,8 @@ l = tkinter.Label(top, text="Fake Face Detection using Deep Learning", font=("He
 
 # variable to store filename 
 filename = tkinter.StringVar()
+# variable to store prediction result
+result = tkinter.StringVar()
 
 def select_file():
     fileName = fd.askopenfilename(initialdir = "/",title = "Select file",
@@ -134,10 +140,39 @@ def select_image():
     img = tkinter.Label(top, image=render)
     img.image = render
     img.place(x=550, y=200)
+    classify_image(file_path);
+
+
+def classify_image(file_path): 
+    # load model
+    model = tensorflow.keras.models.load_model('model/c_model.h5')
+    # make prediction
+    test_image = image.load_img(file_path, target_size=(150, 150, 3)) # this is a PIL image
+    test_image_arr = image.img_to_array(test_image) # convert to array
+    test_image_arr = np.expand_dims(test_image, axis=0) # add an axis to the array
+    logits = model.predict(test_image_arr) # logits is the output of the model
+    predictions = tf.nn.softmax(logits).numpy() # convert to numpy array
+    
+    if np.argmax(predictions) == 0:
+        # result = "The selected image classified as Fake."
+        # # assign to result
+        # result.set(result)
+        l = tkinter.Label(top, text="The selected image classified as Fake").pack()
+        print("The selected image classified as Fake")
+
+        
+    else:
+        # result = "The selected image classified as Real."
+        # # assign to result
+        # result.set(result)
+        l = tkinter.Label(top, text="The selected image classified as Real").pack()
+        print("The selected image classified as Real")
+
+
 
 
     
-
+# display result
 b1 = tkinter.Button(top, text="(2) - Extract Frames & Faces", command=extract_frames_and_faces).pack(pady=20)
 b2 = tkinter.Button(top, text="(3) - Classify on Single Image", command=select_image).pack(pady=20)
 b3 = tkinter.Button(top, text="(4) - Classify on Multiple Image").pack(pady=20)
